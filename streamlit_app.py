@@ -127,13 +127,13 @@ if page == "Tableau de bord":
     c3.metric("Réservations actives",
               sum(1 for r in reservations if r.get("statut") in ("en_cours", "confirmée")))
     st.subheader("Flotte")
-    st.dataframe(vehicules, use_container_width=True)
+    st.dataframe(vehicules, width="stretch")
     st.subheader("Réservations")
-    st.dataframe(reservations, use_container_width=True)
+    st.dataframe(reservations, width="stretch")
 
 # ---- Véhicules & annonces ----
 elif page == "Véhicules & annonces":
-    st.dataframe(vehicules, use_container_width=True)
+    st.dataframe(vehicules, width="stretch")
     label = lambda v: f"{v['id']} — {v['marque']} {v['modele']}"
     veh = next(v for v in vehicules if label(v) ==
                st.selectbox("Véhicule", [label(v) for v in vehicules]))
@@ -167,7 +167,7 @@ elif page == "Tarification":
 # ---- Clients & dossiers ----
 elif page == "Clients & dossiers":
     clients, _ = load("clients")
-    st.dataframe(clients, use_container_width=True)
+    st.dataframe(clients, width="stretch")
     label = lambda c: f"{c['id']} — {c['prenom']} {c['nom']}"
     cli = next(c for c in clients if label(c) ==
                st.selectbox("Client", [label(c) for c in clients]))
