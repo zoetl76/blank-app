@@ -1,23 +1,24 @@
 """
-app.py — Interface Streamlit de l'agence de location de voitures.
+streamlit_app.py — Interface Streamlit de l'agence de location de voitures.
 
-Lancer en local :  streamlit run app.py   (ouvre http://localhost:8501)
+Lancer en local :  streamlit run streamlit_app.py   (ouvre http://localhost:8501)
 
 Données : si GOOGLE_APPLICATION_CREDENTIALS est configuré -> lit les vrais Google
 Sheets via sheets.py ; sinon -> MODE DÉMO sur des données d'exemple intégrées.
-IA : les boutons IA s'activent si ANTHROPIC_API_KEY est défini.
+IA : backend GitHub Models — les boutons IA s'activent si GITHUB_MODELS_TOKEN
+(ou GITHUB_TOKEN) est défini.
 Secrets : via variables d'environnement ou st.secrets — JAMAIS dans le dépôt.
 """
 
 import os
 import streamlit as st
 
-# --- Pont st.secrets -> variables d'environnement (anthropic & gspread les lisent) ---
+# --- Pont st.secrets -> variables d'environnement (openai/GitHub Models & gspread) ---
 try:
     _secrets = dict(st.secrets)
 except Exception:
     _secrets = {}
-for _k in ("ANTHROPIC_API_KEY", "GOOGLE_APPLICATION_CREDENTIALS"):
+for _k in ("GITHUB_MODELS_TOKEN", "GITHUB_TOKEN", "GOOGLE_APPLICATION_CREDENTIALS"):
     if _k in _secrets and not os.environ.get(_k):
         os.environ[_k] = str(_secrets[_k])
 
@@ -90,13 +91,13 @@ def occupation(vehicules):
 
 
 def ai_ready():
-    return bool(os.environ.get("ANTHROPIC_API_KEY"))
+    return bool(os.environ.get("GITHUB_MODELS_TOKEN") or os.environ.get("GITHUB_TOKEN"))
 
 
 def call_ai(fn_name, *args, **kwargs):
-    """Importe agence_ia à la demande (le client n'est créé que si clé présente)."""
+    """Importe agence_ia à la demande (le client n'est créé que si token présent)."""
     if not ai_ready():
-        st.warning("Définis ANTHROPIC_API_KEY (variable d'env ou st.secrets) pour activer l'IA.")
+        st.warning("Définis GITHUB_MODELS_TOKEN (variable d'env ou st.secrets) pour activer l'IA.")
         return None
     try:
         import agence_ia

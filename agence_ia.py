@@ -2,36 +2,56 @@
 agence_ia.py — Fonctionnalités IA de l'agence de location de voitures.
 
 4 briques : tarification dynamique, annonces auto, synthèse de dossier client,
-génération de contrat + chatbot FAQ. Propulsé par Claude (SDK Anthropic) avec
-prompt caching sur les prompts système (stables -> cache hit -> moins cher).
+génération de contrat + chatbot FAQ.
+
+Backend : GitHub Models (API compatible OpenAI), gratuit dans la limite du palier
+GitHub. On l'authentifie avec un token GitHub disposant de la permission "Models".
 
 Prérequis :
     pip install -r requirements.txt
-    export ANTHROPIC_API_KEY="sk-ant-..."
+    export GITHUB_MODELS_TOKEN="github_pat_..."   # token fine-grained, scope Models
+    # (à défaut, GITHUB_TOKEN est aussi accepté)
+
+⚠️ Palier gratuit = rate-limité (quelques req/min, plafond journalier) : OK pour
+démo, pas pour du trafic réel.
 """
 
 from __future__ import annotations
 
 import csv
 import os
-import anthropic
+from openai import OpenAI
 
-# --- Modèles (Claude 4.x). Sonnet par défaut ; Opus pour les tâches "jugement". ---
-MODEL_RAPIDE = "claude-sonnet-4-6"     # annonces, chatbot, contrats
-MODEL_JUGEMENT = "claude-opus-4-7"     # synthèse de dossier (plus exigeant)
+# Endpoint GitHub Models (compatible OpenAI).
+_ENDPOINT = "https://models.inference.ai.azure.com"
 
-_client = anthropic.Anthropic()        # lit ANTHROPIC_API_KEY
+# Modèles dispo sur GitHub Models (gratuit). gpt-4o-mini suffit partout ;
+# passe MODEL_JUGEMENT à "gpt-4o" pour la synthèse de dossier si ton quota le permet.
+MODEL_RAPIDE = "gpt-4o-mini"
+MODEL_JUGEMENT = "gpt-4o-mini"
+
+_client = None
+
+
+def _get_client() -> OpenAI:
+    """Client paresseux : instancié seulement quand on appelle l'IA."""
+    global _client
+    if _client is None:
+        token = os.environ.get("GITHUB_MODELS_TOKEN") or os.environ.get("GITHUB_TOKEN")
+        if not token:
+            raise RuntimeError("Définis GITHUB_MODELS_TOKEN (token GitHub, permission Models).")
+        _client = OpenAI(base_url=_ENDPOINT, api_key=token)
+    return _client
 
 
 def _ask(system: str, user: str, model: str = MODEL_RAPIDE, max_tokens: int = 1024) -> str:
-    """Appel Claude avec prompt système mis en cache (prompt caching)."""
-    resp = _client.messages.create(
+    resp = _get_client().chat.completions.create(
         model=model,
         max_tokens=max_tokens,
-        system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-        messages=[{"role": "user", "content": user}],
+        messages=[{"role": "system", "content": system},
+                  {"role": "user", "content": user}],
     )
-    return "".join(block.text for block in resp.content if block.type == "text").strip()
+    return (resp.choices[0].message.content or "").strip()
 
 
 # ============================================================ a) TARIFICATION

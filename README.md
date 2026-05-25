@@ -11,8 +11,10 @@ L'app tourne en **mode démo** (données d'exemple intégrées) sans aucune conf
 
 ## Secrets (jamais committés)
 Copier `streamlit_secrets_TEMPLATE.toml` en `.streamlit/secrets.toml` et renseigner :
-- `ANTHROPIC_API_KEY` — clé API Claude (active les fonctions IA)
+- `GITHUB_MODELS_TOKEN` — token GitHub avec permission **Models** (active l'IA via GitHub Models, gratuit, rate-limité)
 - `GOOGLE_APPLICATION_CREDENTIALS` ou table `[gcp_service_account]` — compte de service Google (lecture des Google Sheets de données)
+
+Backend IA : **GitHub Models** (API compatible OpenAI, `https://models.inference.ai.azure.com`, modèle `gpt-4o-mini`).
 
 ## Déploiement Streamlit Community Cloud
 1. Pousser ce repo sur GitHub (sans secrets).
