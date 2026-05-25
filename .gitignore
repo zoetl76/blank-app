@@ -1,0 +1,12 @@
+# Secrets — NE JAMAIS committer
+.streamlit/secrets.toml
+.env
+*service_account*.json
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
